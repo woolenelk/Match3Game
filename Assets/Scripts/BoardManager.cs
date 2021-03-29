@@ -1,7 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public enum Difficulty : int
 {
@@ -11,6 +12,16 @@ public enum Difficulty : int
 }
 public class BoardManager : MonoBehaviour
 {
+    [SerializeField]
+    Text difficultytext;
+    [SerializeField]
+    Text timertext;
+    [SerializeField]
+    Text combotex;
+    public float timer = 60;
+    public int combosDone = 0;
+    [SerializeField]
+
     public static BoardManager instance;
     [SerializeField]
     public List<TileValueScriptableObj> characters = new List<TileValueScriptableObj>();
@@ -21,23 +32,39 @@ public class BoardManager : MonoBehaviour
     private GameObject selectedTile;
     private int selectX = -1, selectY = -1;
     //private GameObject[,] tiles;
-    public float timer;
-    public int NeededCombos;
+    
+    public int NeededCombos = 6;
     //public List<GameObject> matched = new List<GameObject>();
     public Difficulty difficulty = Difficulty.EASY;
     public bool IsShifting { get; set; }
     public bool IsChecking { get; set; }
+    public bool IsSpawning { get; set; }
 
     void Start()
     {
         instance = this;
         CreateBoard(offset.x, offset.y);
         StartCoroutine(MatchCheck());
+        difficultytext.text = ((int)difficulty).ToString() + " of a kind";
+    }
+
+    private void Update()
+    {
+        if (timer <= 0)
+        {
+            SceneManager.LoadScene("Lose");
+        }
+        if (combosDone>= NeededCombos)
+        {
+            SceneManager.LoadScene("Win");
+        }
     }
 
     private void FixedUpdate()
     {
-        
+        timer -= Time.deltaTime;
+        timertext.text = timer.ToString();
+        combotex.text = combosDone.ToString() + " / " + NeededCombos.ToString();
         for (int x = 0; x < tiles.Count; x++)
         {
             for (int y = 0; y < tiles[x].Count; y++)
@@ -211,11 +238,11 @@ public class BoardManager : MonoBehaviour
         }
 
         SetProperPosition();
-        //CheckMatching(x1, y1);
-        //CheckMatching(x2, y2);
-        //if (SpawnNewTileAndClearMatching())
-        //    StartCoroutine(MatchCheck());
-        StartCoroutine(MatchCheck());
+        CheckMatching(x1, y1);
+        CheckMatching(x2, y2);
+        if (SpawnNewTileAndClearMatching())
+            StartCoroutine(MatchCheck());
+        //StartCoroutine(MatchCheck());
     }
 
     void CheckMatching (int x, int y)
@@ -254,12 +281,15 @@ public class BoardManager : MonoBehaviour
 
         if (combo.Count >= (int)difficulty)
         {
-            foreach (GameObject item in combo)
+            combosDone++;
+            for (int i = 0; i < combo.Count; i++)
             {
-                item.GetComponent<Tile>().matched = true;
-                //matched.Add(item);
-                break;
+                combo[i].GetComponent<Tile>().matched = true;
             }
+            //foreach (GameObject item in combo)
+            //{
+            //    item.GetComponent<Tile>().matched = true;
+            //}
             return;
         }
 
@@ -293,10 +323,15 @@ public class BoardManager : MonoBehaviour
 
         if (combo.Count >= (int)difficulty)
         {
-            foreach (GameObject item in combo)
+            combosDone++;
+            for (int i = 0; i < combo.Count; i++)
             {
-                item.GetComponent<Tile>().matched = true;
+                combo[i].GetComponent<Tile>().matched = true;
             }
+            //foreach (GameObject item in combo)
+            //{
+            //    item.GetComponent<Tile>().matched = true;
+            //}
             return;
         }
     }
@@ -323,6 +358,7 @@ public class BoardManager : MonoBehaviour
                     newTile.GetComponent<Tile>().tilevalue = characters[Random.Range(0, characters.Count)];
                     tiles[x].Add(newTile);
                     spawned = true;
+                    IsSpawning = true;
                 }
             }
         }
@@ -344,10 +380,15 @@ public class BoardManager : MonoBehaviour
         }
         //yield return new WaitForSeconds(0.1f);
         if (SpawnNewTileAndClearMatching())
+        {
+            yield return new WaitForSeconds(1.0f);
             StartCoroutine(MatchCheck());
+        }
         else
         {
+            yield return new WaitForSeconds(1.0f);
             IsChecking = false;
+            IsSpawning = false;
         }
     }
 }
