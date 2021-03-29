@@ -587,6 +587,8 @@ MonoBehaviour:
   xSize: 15
   ySize: 10
   offset: {x: 1.01, y: 1.01}
+  matched: []
+  difficulty: 3
 --- !u!4 &1871095498
 Transform:
   m_ObjectHideFlags: 0
@@ -614,7 +616,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1084267939982649855, guid: 2e89a0591eaa87044a0e41e0238e4c19, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1142233728016992470, guid: 2e89a0591eaa87044a0e41e0238e4c19, type: 3}
       propertyPath: m_RootOrder

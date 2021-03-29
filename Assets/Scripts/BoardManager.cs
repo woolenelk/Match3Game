@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+public enum Difficulty : int
+{
+    EASY = 3,
+    MEDIUM = 4,
+    HARD = 5
+}
 public class BoardManager : MonoBehaviour
 {
     public static BoardManager instance;
@@ -14,13 +21,18 @@ public class BoardManager : MonoBehaviour
     private GameObject selectedTile;
     private int selectX = -1, selectY = -1;
     //private GameObject[,] tiles;
-
+    public float timer;
+    public int NeededCombos;
+    //public List<GameObject> matched = new List<GameObject>();
+    public Difficulty difficulty = Difficulty.EASY;
     public bool IsShifting { get; set; }
+    public bool IsChecking { get; set; }
 
     void Start()
     {
         instance = this;
         CreateBoard(offset.x, offset.y);
+        StartCoroutine(MatchCheck());
     }
 
     private void FixedUpdate()
@@ -199,6 +211,143 @@ public class BoardManager : MonoBehaviour
         }
 
         SetProperPosition();
+        //CheckMatching(x1, y1);
+        //CheckMatching(x2, y2);
+        //if (SpawnNewTileAndClearMatching())
+        //    StartCoroutine(MatchCheck());
+        StartCoroutine(MatchCheck());
     }
 
+    void CheckMatching (int x, int y)
+    {
+        if (tiles[x][y].GetComponent<Tile>().matched)
+            return;
+
+        List<GameObject> combo = new List<GameObject>() ;
+
+        // vertical check
+        combo.Add(tiles[x][y]);
+        for (int y2 = y; y2 < tiles[x].Count; y2++)
+        {
+            if (tiles[x][y2].GetComponent<Tile>().tilevalue.value == tiles[x][y].GetComponent<Tile>().tilevalue.value)
+            {
+                if (!combo.Contains(tiles[x][y2]))
+                    combo.Add(tiles[x][y2]);
+            }
+            else
+            {
+                break;
+            }
+        }
+        for (int y2 = y; y2 >=0; y2--)
+        {
+            if (tiles[x][y2].GetComponent<Tile>().tilevalue.value == tiles[x][y].GetComponent<Tile>().tilevalue.value)
+            {
+                if (!combo.Contains(tiles[x][y2]))
+                    combo.Add(tiles[x][y2]);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (combo.Count >= (int)difficulty)
+        {
+            foreach (GameObject item in combo)
+            {
+                item.GetComponent<Tile>().matched = true;
+                //matched.Add(item);
+                break;
+            }
+            return;
+        }
+
+        combo.Clear();
+        // check horizontal
+        combo.Add(tiles[x][y]);
+        for (int x2 = x; x2 < tiles.Count; x2++)
+        {
+            if (tiles[x2][y].GetComponent<Tile>().tilevalue.value == tiles[x][y].GetComponent<Tile>().tilevalue.value)
+            {
+                if (!combo.Contains(tiles[x2][y]))
+                    combo.Add(tiles[x2][y]);
+            }
+            else
+            {
+                break;
+            }
+        }
+        for (int x2 = x; x2 >= 0; x2--)
+        {
+            if (tiles[x2][y].GetComponent<Tile>().tilevalue.value == tiles[x][y].GetComponent<Tile>().tilevalue.value)
+            {
+                if (!combo.Contains(tiles[x2][y]))
+                    combo.Add(tiles[x2][y]);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (combo.Count >= (int)difficulty)
+        {
+            foreach (GameObject item in combo)
+            {
+                item.GetComponent<Tile>().matched = true;
+            }
+            return;
+        }
+    }
+
+    bool SpawnNewTileAndClearMatching()
+    {
+        bool spawned = false;
+        float startX = transform.position.x;
+        float startY = transform.position.y;
+
+        for (int x = 0; x < tiles.Count; x++)
+        {
+            for (int y = 0; y < tiles[x].Count; y++)
+            {
+                if (tiles[x][y].GetComponent<Tile>().matched)
+                {
+                    GameObject temp = tiles[x][y];
+                    tiles[x].Remove(tiles[x][y]);
+                    Destroy(temp);
+
+                    GameObject newTile = Instantiate(tile, new Vector3(startX + (offset.x * x), startY + (offset.y * ySize), 0), tile.transform.rotation);
+                    newTile.transform.parent = transform;
+                    newTile.GetComponent<Tile>().position = new Vector3(startX + (offset.x * x), startY + (offset.y * y), 0);
+                    newTile.GetComponent<Tile>().tilevalue = characters[Random.Range(0, characters.Count)];
+                    tiles[x].Add(newTile);
+                    spawned = true;
+                }
+            }
+        }
+        SetProperPosition();
+        return spawned;
+    }
+
+    IEnumerator MatchCheck()
+    {
+        IsChecking = true;
+        while (IsShifting)
+            yield return new WaitForSeconds(0.1f);
+        for (int x = 0; x < tiles.Count; x++)
+        {
+            for (int y = 0; y < tiles[x].Count; y++)
+            {
+                CheckMatching(x, y);
+            }
+        }
+        //yield return new WaitForSeconds(0.1f);
+        if (SpawnNewTileAndClearMatching())
+            StartCoroutine(MatchCheck());
+        else
+        {
+            IsChecking = false;
+        }
+    }
 }

@@ -13,7 +13,7 @@ public class Tile : MonoBehaviour
     [SerializeField]
     public bool inPlace = false;
     public Vector3 position;
-    
+    public bool matched = false;
     Animator animator;
 
     private void Start()
@@ -28,7 +28,7 @@ public class Tile : MonoBehaviour
     {
         animator.SetBool("selected", selected);
         
-        if (Vector3.Distance(transform.position, position)<=0.05)
+        if (Vector3.Distance(transform.position, position)<=0.02)
         {
             //Debug.Log(transform.position + "  to   " + position);
             transform.position = position;
@@ -37,9 +37,9 @@ public class Tile : MonoBehaviour
         else
         {
             inPlace = false;
-            transform.position = new Vector3(Mathf.Lerp(transform.position.x, position.x, Time.deltaTime),
-                                             Mathf.Lerp(transform.position.y, position.y, Time.deltaTime),
-                                             Mathf.Lerp(transform.position.z, position.z, Time.deltaTime));
+            transform.position = new Vector3(Mathf.Lerp(transform.position.x, position.x, Time.deltaTime*5),
+                                             Mathf.Lerp(transform.position.y, position.y, Time.deltaTime*5),
+                                             Mathf.Lerp(transform.position.z, position.z, Time.deltaTime*5));
         }
 
         if (tilevalue != null)
@@ -50,7 +50,7 @@ public class Tile : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (tilevalue == null || BoardManager.instance.IsShifting)
+        if (tilevalue == null || BoardManager.instance.IsShifting || BoardManager.instance.IsChecking)
         {
             return;
         }
