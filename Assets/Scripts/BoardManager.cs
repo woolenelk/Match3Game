@@ -22,6 +22,7 @@ public class BoardManager : MonoBehaviour
     public int combosDone = 0;
     [SerializeField]
 
+    AudioSource audioDing;
     public static BoardManager instance;
     [SerializeField]
     public List<TileValueScriptableObj> characters = new List<TileValueScriptableObj>();
@@ -42,6 +43,7 @@ public class BoardManager : MonoBehaviour
 
     void Start()
     {
+        audioDing = GetComponent<AudioSource>();
         instance = this;
         CreateBoard(offset.x, offset.y);
         StartCoroutine(MatchCheck());
@@ -282,6 +284,7 @@ public class BoardManager : MonoBehaviour
         if (combo.Count >= (int)difficulty)
         {
             combosDone++;
+            audioDing.Play();
             for (int i = 0; i < combo.Count; i++)
             {
                 combo[i].GetComponent<Tile>().matched = true;
@@ -323,6 +326,7 @@ public class BoardManager : MonoBehaviour
 
         if (combo.Count >= (int)difficulty)
         {
+            audioDing.Play();
             combosDone++;
             for (int i = 0; i < combo.Count; i++)
             {
